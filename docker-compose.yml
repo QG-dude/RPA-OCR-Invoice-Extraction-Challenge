@@ -1,0 +1,41 @@
+services:
+  selenium-chrome:
+    image: selenium/standalone-chrome:112.0-20250727
+    ports:
+      - "${SELENIUM_PORT}:4444"
+      - "${VNC_PORT}:7900"
+    shm_size: 2g
+    environment:
+      - VNC_PASSWORD=secret
+    networks:
+      - rpa-network
+
+  tesseract-ocr:
+    build:
+      context: ./tesseract-ocr
+      dockerfile: Dockerfile
+    container_name: tesseract-ocr
+    ports:
+      - "${TESSERACT_PORT}:5000"
+    networks:
+      - rpa-network
+
+  rpa-ocr-challenge:
+    build:
+      context: ./rpa-ocr-challenge
+      dockerfile: Dockerfile
+    container_name: rpa-ocr-challenge
+    environment:
+      - HOST_IP=selenium-chrome
+      - TESSERACT_IP=tesseract-ocr
+      - SELENIUM_PORT=${SELENIUM_PORT}
+      - TESSERACT_PORT=${TESSERACT_PORT}
+    depends_on:
+      - selenium-chrome
+      - tesseract-ocr
+    networks:
+      - rpa-network
+
+networks:
+  rpa-network:
+    driver: bridge
